@@ -1,3 +1,5 @@
+# Invoke-AnalyticsReport
+
 Creates a scan analytics report for a Tenable authenticated scan (not suitable for vulnerabilities search export). Output: a CSV file containing each of the unique IPs in a scan, providing such information as:
 * Presence of plugins indicating valid credentials provided or credentials failure
 * Authentication information provided by plugin "Target Credential Status by Authentication Protocol - Valid Credentials Provided" - User, Port, Proto, Method, Source, Escalation
@@ -111,4 +113,18 @@ OUTPUTS
 
     PS>Invoke-AnalyticsReport -InputCsvPath vulns.csv -CheckPluginsPresence 102094 -PluginNamesHashTable @{102094 = "Privs Issue"}
     -SaveExportWithNoInfoPlugins
+```
+
+# Invoke-IPsInRangesCheck
+
+Supported by Microsoft's Test-IpAddressInSubnet function, allows to check an array of single IPs against an export of IP ranges, presented by individual IPs, ranges like 10.0.0.1-10.0.255.255, and CIDR subnets. Ranges can be combined into one cell, separated by ",", ";", " ", or a combination of these characters. Information about the ranges can be taken from other columns of the Ranges CSV file. The column name containing IP ranges must be provided in parameter -IPsRangesColumnName. Empty cells are ignored, as well as strings appearing to be not an IP address or a range.
+Ranges can be taken from TVM scanner groups, tags, SC scan zones, repositories, etc.
+Creates a CSV file containing each IP matched with a specific range or subnet found in ranges definitions, along with all the other columns from the ranges CSV.
+Useful to identify what IPs are found within or missing in scan zones / tags on Tenable tools.
+
+Example:
+
+```
+PS> Invoke-IPsInRangesCheck -InputIPs "10.0.0.1","10.0.0.2","10.0.0.254" -RangesCsvPath scanner-groups.csv -IPsRangesColumnName "ipList"
+PS> Invoke-IPsInRangesCheck -InputIPs (Import-Csv -Path .\test_ips.csv).IP -RangesCsvPath scanner-groups.csv -IPsRangesColumnName "ipList"
 ```
