@@ -235,7 +235,7 @@ function Invoke-IPsInRangesCheck {
             if ($check_result) {
                 $row = [PSCustomObject]@{IP = $ip }
                 foreach ($column in $other_columns) {
-                    $row | Add-Member -MemberType NoteProperty -Name $column -Value $range.$column
+                    $row | Add-Member -MemberType NoteProperty -Name $column -Value $range_row.$column
                 }
                 $row | Add-Member -MemberType NoteProperty -Name Matching_Range -Value $range_ips
                 $ips_ranges_match_result += $row
