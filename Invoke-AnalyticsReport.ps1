@@ -89,12 +89,12 @@ function Invoke-AnalyticsReport {
     
     $input_csv_path = $InputCsvPath
     
-    Write-Output "Analyzing file $($input_csv_path)"
+    Write-Host "Analyzing file $($input_csv_path)"
     
     $input_csv_file = Get-Item $input_csv_path
     $scan_csv = Import-Csv -Path $input_csv_path
     
-    Write-Output "CSV imported"
+    Write-Host "CSV imported"
     
     if ($scan_csv[0].PSObject.Properties.Name -contains $plugin_id_column_name_sc) {
         $plugin_id_column_name = $plugin_id_column_name_sc
@@ -103,7 +103,7 @@ function Invoke-AnalyticsReport {
         $plugin_id_column_name = $plugin_id_column_name_tvm
     }
     else {
-        Write-Output "Warning: No Plugin / Plugin ID column found. Exiting..."
+        Write-Host "Warning: No Plugin / Plugin ID column found. Exiting..."
         return -1
     }
     
@@ -119,35 +119,35 @@ function Invoke-AnalyticsReport {
         $forti_device_identification = $scan_csv | Select-Object -Property $plugin_id_column_name, $plugin_name_column_name, $ip_address_column_name, $plugin_output_column_name | Where-Object -Property $plugin_id_column_name -Like $fortinet_device_detection_plugin_id
     }
     
-    Write-Output "Plugins lists created"
+    Write-Host "Plugins lists created"
     
     if ($CheckPluginsPresence) {
-        Write-Output "The following additional plugin checks will be added: $($CheckPluginsPresence -join ', ')"
+        Write-Host "The following additional plugin checks will be added: $($CheckPluginsPresence -join ', ')"
     }
     
     if ($PluginNamesHashTable -and $CheckPluginsPresence) {
         foreach ($plugin_id in $PluginNamesHashTable.Keys) {
             if ( !($plugin_id -is [int]) ) {
-                Write-Output "Warning: HashTable Key $($plugin_id) is not a valid Plugin ID (integer) and will not be mapped with CheckPluginsPresence values"
+                Write-Host "Warning: HashTable Key $($plugin_id) is not a valid Plugin ID (integer) and will not be mapped with CheckPluginsPresence values"
             }
             if ( !($PluginNamesHashTable[$plugin_id] -is [string]) ) {
-                Write-Output "Warning: HashTable Value found by key $($plugin_id) is not a valid Plugin Name (string). Exiting..."
+                Write-Host "Warning: HashTable Value found by key $($plugin_id) is not a valid Plugin Name (string). Exiting..."
                 return -1
             }
         }
-        Write-Output "The following additional columns will be added:"
+        Write-Host "The following additional columns will be added:"
         foreach ($plugin_id in $CheckPluginsPresence) {
             if (($plugin_id -in $PluginNamesHashTable.Keys) -and ($PluginNamesHashTable[$plugin_id])) {
-                Write-Output "Column '$($PluginNamesHashTable[$plugin_id])' for Plugin ID $($plugin_id)"
+                Write-Host "Column '$($PluginNamesHashTable[$plugin_id])' for Plugin ID $($plugin_id)"
             }
             else {
-                Write-Output "Warning: Plugin ID $($plugin_id) is not found in the PluginNamesHashTable keys. Plugin ID will be added as column name."
+                Write-Host "Warning: Plugin ID $($plugin_id) is not found in the PluginNamesHashTable keys. Plugin ID will be added as column name."
             }
         }
     }
     
     if ($PluginNamesHashTable -and !$CheckPluginsPresence) {
-        Write-Output "CheckPluginsPresence parameter not found, skipping PluginNamesHashTable"
+        Write-Host "CheckPluginsPresence parameter not found, skipping PluginNamesHashTable"
     }
     
     $ips_count = $unique_ips.Count
@@ -155,13 +155,13 @@ function Invoke-AnalyticsReport {
     $report_delta = [int]($ips_count / 10)
     $next_report_index = $report_delta
     
-    Write-Output "Starting processing $($ips_count) unique IPs"
+    Write-Host "Starting processing $($ips_count) unique IPs"
     
     $report_ips = @()
     
     foreach ($ip_line in $unique_ips) {
         if ($current_index -eq $next_report_index) {
-            Write-Output "Processing $($current_index)/$($ips_count) IPs"
+            Write-Host "Processing $($current_index)/$($ips_count) IPs"
             $next_report_index += $report_delta
         }
         $ip = $ip_line.$ip_address_column_name
@@ -264,29 +264,29 @@ function Invoke-AnalyticsReport {
         $current_index += 1
     }
     
-    Write-Output "IPs processed"
+    Write-Host "IPs processed"
     
     $report_file_name = "$($input_csv_file.Basename)-analytics.csv"
     
     if ($OutputCsvName) { $report_file_name = $OutputCsvName }
     
-    Write-Output "Creating result file '$($report_file_name)'"
+    Write-Host "Creating result file '$($report_file_name)'"
     
     $report_ips | Export-Csv -Path $report_file_name -NoTypeInformation
     
-    Write-Output "Result file '$($report_file_name)' created"
+    Write-Host "Result file '$($report_file_name)' created"
     
     if ($SaveExportWithNoInfoPlugins) {
         $export_file_name = "$($input_csv_file.Basename)-no-info-plugins.csv"
-        Write-Output "Creating export file '$($export_file_name)'"
+        Write-Host "Creating export file '$($export_file_name)'"
         $export_plugins = $scan_csv | Where-Object -Property $severity_column_name -NotMatch $info_severity_value
         if (!$export_plugins) {
-            Write-Output "Warning: No plugins found after removing Info. Nothing to export to file $($export_file_name)"
+            Write-Host "Warning: No plugins found after removing Info. Nothing to export to file $($export_file_name)"
         }
         $export_plugins | Export-Csv -Path $export_file_name -NoTypeInformation
-        Write-Output "Plugins exported to '$($export_file_name)'"
+        Write-Host "Plugins exported to '$($export_file_name)'"
     }
     
-    Write-Output "Done"
+    Write-Host "Done"
     
 }
