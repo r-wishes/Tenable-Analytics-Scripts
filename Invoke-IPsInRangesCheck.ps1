@@ -122,36 +122,36 @@ function Invoke-IPsInRangesCheck {
     $ips_to_check = $InputIPs
 
     if (($ips_to_check.GetType().Name -ne "Object[]" -and $ips_to_check.GetType().Name -ne "String[]") -or $ips_to_check.Count -eq 0) {
-        Write-Output $ips_to_check.GetType()
-        Write-Output "Invalid array of IPs to check. Exiting..."
+        Write-Host $ips_to_check.GetType()
+        Write-Host "Invalid array of IPs to check. Exiting..."
         return -1
     }
 
     $input_csv_path = $RangesCsvPath
 
-    Write-Output "Analyzing file $($input_csv_path)"
+    Write-Host "Analyzing file $($input_csv_path)"
 
     $input_csv_file = Get-Item $input_csv_path
     $ranges_csv = Import-Csv -Path $input_csv_path
 
-    Write-Output "CSV imported"
+    Write-Host "CSV imported"
 
     if ($ranges_csv.Count -eq 0) {
-        Write-Output "CSV file appears empty. Exiting..."
+        Write-Host "CSV file appears empty. Exiting..."
         return -1
     }
 
     if ($ranges_csv[0].PSObject.Properties.Name -Contains $IPsRangesColumnName) {
-        Write-Output "IP Ranges are defined in column $($IPsRangesColumnName)"
+        Write-Host "IP Ranges are defined in column $($IPsRangesColumnName)"
     }
     else {
-        Write-Output "IP Ranges column is not found in the input CSV file. Exiting..."
+        Write-Host "IP Ranges column is not found in the input CSV file. Exiting..."
         return -1
     }
 
     $other_columns = $ranges_csv[0].PSObject.Properties.Name | Where { $_ -NotLike $IPsRangesColumnName }
 
-    Write-Output "Splitting ranges"
+    Write-Host "Splitting ranges"
 
     $ranges_unpivoted = @()
 
@@ -161,7 +161,7 @@ function Invoke-IPsInRangesCheck {
             $ips_list_split = $ips_list.Split($separators, [System.StringSplitOptions]::RemoveEmptyEntries)
             foreach ($item in $ips_list_split) { 
                 if ($item -notmatch $single_ip_regex -and $item -notmatch $ip_range_regex -and $item -notmatch $ip_subnet_regex) {
-                    Write-Output "Error: unrecognized IP/range/subnet: $($item). Skipping..."
+                    Write-Host "Error: unrecognized IP/range/subnet: $($item). Skipping..."
                     continue
                 }
                 $row = [PSCustomObject]@{}
@@ -179,19 +179,19 @@ function Invoke-IPsInRangesCheck {
             continue
         }
         else {
-            Write-Output "Error: unrecognized range IPs: $($ips_list). Skipping..."
+            Write-Host "Error: unrecognized range IPs: $($ips_list). Skipping..."
             continue
         }
     }
 
-    Write-Output "Splitting the ranges is completed with $($ranges_unpivoted.Count) result items"
+    Write-Host "Splitting the ranges is completed with $($ranges_unpivoted.Count) result items"
 
     $ips_count = $ips_to_check.Count
     $current_index = 0
     $report_delta = [int]($ips_count / 10)
     $next_report_index = $report_delta
 
-    Write-Output "Starting processing $($ips_count) IPs"
+    Write-Host "Starting processing $($ips_count) IPs"
 
 
     $ips_ranges_match_result = @()
@@ -199,12 +199,12 @@ function Invoke-IPsInRangesCheck {
     foreach ($ip in $ips_to_check) {
 
         if ($current_index -eq $next_report_index) {
-            Write-Output "Processing $($current_index)/$($ips_count) IPs"
+            Write-Host "Processing $($current_index)/$($ips_count) IPs"
             $next_report_index += $report_delta
         }
 
         if ($ip -notmatch $single_ip_regex) {
-            Write-Output "Error: unrecognized IP value: $($ip). Skipping..."
+            Write-Host "Error: unrecognized IP value: $($ip). Skipping..."
             continue
         }
 
@@ -228,7 +228,7 @@ function Invoke-IPsInRangesCheck {
                 $check_result = Test-IpAddressInSubnet $ip -Subnet $range_ips
             }
             else {
-                Write-Output "Error: unrecognized range IPs: $($range_ips). Skipping..."
+                Write-Host "Error: unrecognized range IPs: $($range_ips). Skipping..."
                 continue
             }
 
@@ -247,17 +247,17 @@ function Invoke-IPsInRangesCheck {
 
     }
 
-    Write-Output "IPs processed"
-    Write-Output "Total $($ips_ranges_match_result.Count) matches found, with $(($ips_ranges_match_result.IP | Select-Object -Unique).Count) unique IPs"
+    Write-Host "IPs processed"
+    Write-Host "Total $($ips_ranges_match_result.Count) matches found, with $(($ips_ranges_match_result.IP | Select-Object -Unique).Count) unique IPs"
 
     $report_file_name = "$($input_csv_file.Basename)-ranges-match.csv"
 
     if ($OutputCsvName) { $report_file_name = $OutputCsvName }
 
-    Write-Output "Creating result file '$($report_file_name)'"
+    Write-Host "Creating result file '$($report_file_name)'"
 
     $ips_ranges_match_result | Export-Csv -Path $report_file_name -NoTypeInformation
 
-    Write-Output "Result file '$($report_file_name)' created"
+    Write-Host "Result file '$($report_file_name)' created"
 
 }
